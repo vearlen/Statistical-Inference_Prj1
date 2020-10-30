@@ -1,0 +1,110 @@
+---
+title: "Statistical Inference Course Project 1"
+author: "Ilya Tishchenko"
+date: "9/14/2020"
+
+output:
+  html_document: 
+  
+  toc: true
+  
+  toc_float: true
+  
+ 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+```
+
+## Part 1
+
+Illustrate via simulation and associated explanatory text the properties of the distribution of the mean of 40 exponentials. You should:
+
+1. Show the sample mean and compare it to the theoretical mean of the distribution.
+2. Show how variable the sample is (via variance) and compare it to the theoretical variance of the distribution.
+3. Show that the distribution is approximately normal.
+
+
+## Simulation
+
+Generate thousand simulations by 40.
+
+```{r simulation}
+
+lambda <- 0.2
+n <- 40
+ns <- 1000
+exp=NULL
+for (i in 1 : 10000) exp = c(exp, mean(rexp(40,0.2)))
+hist(exp)
+```
+
+```{r}
+1/0.2 #theoretical mean
+
+mean(exp)#sample mean
+
+```
+
+As could be seen theoretical and sample means are very close.  
+  
+## Variance comparison  
+Theoretical standard deviation: $s=\frac{1/\lambda}{\sqrt{n}}$
+```{r}
+1/0.2/sqrt(40) #theoretical sd
+sd(exp) #sample sd
+```
+
+Variance: $\sigma=s^2$
+```{r}
+(1/0.2/sqrt(40))^2 #theoretical variance
+var(exp) # sample variance
+```
+
+## Show that distribution is approximately normal
+
+In a same manner we generate normal distribution with appropriate mean and sd.
+```{r normal dist}
+# norm.sim=NULL
+# for (i in 1 : 10000) norm.sim <- c(norm.sim,rnorm(40,5,5))
+norm.sim <- rnorm(10000,5,5)
+
+```
+I plot density plot for both distributions exponential and normal, as could be seen visually the distribution of exponential simulation follows that of normal.
+```{r}
+#merge data into dataframe
+exp.df <- data.frame(exp) %>%
+  mutate(label="exp")%>%
+  rename(value="exp")
+norm.df <- data.frame(norm.sim)%>%
+  mutate(label="norm")%>%
+  rename (value="norm.sim")
+sim.df <- rbind(exp.df,norm.df)
+
+#calc CI for both dataset
+cinorm <- quantile(norm.sim,c(0.025,.975))
+ciexp <- quantile (exp,c(0.025,0.975))
+
+cinorm.df <- data.frame(cinorm)%>%
+  rename (value="cinorm")%>%
+  mutate(label="norm")
+ciexp.df <- data.frame(ciexp) %>%
+  rename(value="ciexp")%>%
+  mutate(label="exp")
+
+ci.df <- rbind(cinorm.df, ciexp.df)
+
+#plot histogramm, mean and CI
+ggplot(sim.df)+
+  geom_density(aes(x=value,fill=label), alpha=.5)+
+  labs(title="Density plot for two simulated vectors",subtitle = " with mean shown as dashed and CI±95% as solid lines", x="values")+
+  scale_fill_discrete(name="", labels=c("Exponential","Normal"))+
+  geom_vline(aes(xintercept=mean(value),color=label),size=1,linetype=2, show.legend = FALSE)+
+  geom_vline(data=ci.df,aes(xintercept=value,color=label), show.legend = FALSE)+
+  theme_minimal()
+  
+```
+
